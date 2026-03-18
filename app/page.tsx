@@ -389,11 +389,13 @@ function Dialog({ delayTimeMs }: { delayTimeMs: number }) {
 }
 
 function CameraController({ mode }: { mode: number }) {
-  const { camera } = useThree();
+  const { camera, size } = useThree();
   const controlsRef = useRef<any>(null);
   const userInteracting = useRef(false);
   const autoCycleIndex = useRef(1);
   const autoTimer = useRef(0);
+  const isMobile = size.width < 768;
+  const zoomScale = isMobile ? 1.25 : 1;
   const targetPos = useMemo(() => new THREE.Vector3(0, 0, 8.5), []);
 
   useEffect(() => {
@@ -416,26 +418,27 @@ function CameraController({ mode }: { mode: number }) {
 
     const t = state.clock.elapsedTime;
 
+    const s = zoomScale;
     switch (activeMode) {
-      case 1: targetPos.set(0, 0, 8.5); break; // Front
-      case 2: targetPos.set(-7, 3, 6); break; // Left angled
-      case 3: targetPos.set(7, 4, 6); break; // Right angled
-      case 4: targetPos.set(0, 7, 3); break; // Top angled
-      case 5: targetPos.set(-4, -1.5, 4.5); break; // Low angle
+      case 1: targetPos.set(0, 0, 8.5 * s); break; // Front
+      case 2: targetPos.set(-7 * s, 3 * s, 6 * s); break; // Left angled
+      case 3: targetPos.set(7 * s, 4 * s, 6 * s); break; // Right angled
+      case 4: targetPos.set(0, 7 * s, 3 * s); break; // Top angled
+      case 5: targetPos.set(-4 * s, -1.5 * s, 4.5 * s); break; // Low angle
       case 6: // Orbit slowly
-        targetPos.set(Math.sin(t * 0.15) * 8.5, 3, Math.cos(t * 0.15) * 8.5);
+        targetPos.set(Math.sin(t * 0.15) * 8.5 * s, 3 * s, Math.cos(t * 0.15) * 8.5 * s);
         break;
       case 7: // Pan back and forth
-        targetPos.set(Math.sin(t * 0.25) * 5, 0, 8.5);
+        targetPos.set(Math.sin(t * 0.25) * 5 * s, 0, 8.5 * s);
         break;
       case 8: // Dolly in and out
-        targetPos.set(0, 1.5, 6 + Math.sin(t * 0.2) * 4);
+        targetPos.set(0, 1.5 * s, (6 + Math.sin(t * 0.2) * 4) * s);
         break;
       case 9: // Dynamic sweeping arc
-        targetPos.set(Math.sin(t * 0.2) * 7, Math.cos(t * 0.125) * 4, 4.5 + Math.sin(t * 0.15) * 4);
+        targetPos.set(Math.sin(t * 0.2) * 7 * s, Math.cos(t * 0.125) * 4 * s, (4.5 + Math.sin(t * 0.15) * 4) * s);
         break;
       default:
-        targetPos.set(0, 0, 8.5);
+        targetPos.set(0, 0, 8.5 * s);
     }
 
     // Smooth ease towards the target position
@@ -477,15 +480,15 @@ function Taskbar({ onStartClick }: { onStartClick: () => void }) {
   };
 
   return (
-    <div className="h-[38px] bg-[#c0c7c8] w-full flex justify-between items-center px-1 border-t-2 border-t-white z-50 relative shrink-0">
+    <div className="h-[46px] md:h-[38px] bg-[#c0c7c8] w-full flex justify-between items-center px-1 border-t-2 border-t-white z-50 relative shrink-0">
       <div className="flex items-center gap-1 h-full py-1">
         {/* Start Button */}
-        <button 
+        <button
           onClick={onStartClick}
-          className="h-full px-[10px] flex items-center gap-1 bg-[#c0c7c8] border-2 border-t-white border-l-white border-b-[#808080] border-r-[#808080] active:border-t-[#808080] active:border-l-[#808080] active:border-b-white active:border-r-white font-bold text-[17px] text-black"
+          className="h-full px-[12px] md:px-[10px] flex items-center gap-1 bg-[#c0c7c8] border-2 border-t-white border-l-white border-b-[#808080] border-r-[#808080] active:border-t-[#808080] active:border-l-[#808080] active:border-b-white active:border-r-white font-bold text-[20px] md:text-[17px] text-black"
           style={{ fontFamily: '"Pixelated MS Sans Serif", "MS Sans Serif", "Microsoft Sans Serif", Tahoma, Arial, sans-serif', WebkitFontSmoothing: 'none' }}
         >
-          <div className="grid grid-cols-2 gap-[1px] w-[17px] h-[17px] mr-1 skew-y-[-10deg] skew-x-[-10deg]">
+          <div className="grid grid-cols-2 gap-[1px] w-[20px] h-[20px] md:w-[17px] md:h-[17px] mr-1 skew-y-[-10deg] skew-x-[-10deg]">
             <div className="bg-[#f05129]"></div>
             <div className="bg-[#7ebc13]"></div>
             <div className="bg-[#00a3f4]"></div>
