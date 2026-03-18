@@ -88,8 +88,12 @@ function Folder({ position, rotation, isEmpty = false }: { position: [number, nu
   );
 }
 
+// Cap delta to avoid animation speedrun when tab regains focus
+const MAX_DELTA = 1 / 30; // treat gaps longer than ~33ms as a single frame
+
 function Paper({ offset }: { offset: number }) {
   const paperRef = useRef<THREE.Group>(null);
+  const localTime = useRef(0);
 
   const { shape, foldShape } = useMemo(() => {
     const s = new THREE.Shape();
@@ -109,12 +113,13 @@ function Paper({ offset }: { offset: number }) {
     return { shape: s, foldShape: fs };
   }, []);
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
     if (paperRef.current) {
-      const time = state.clock.elapsedTime;
+      localTime.current += Math.min(delta, MAX_DELTA);
+      const time = localTime.current;
       const speed = 0.4; // cycles per second
       let progress = (time * speed + offset) % 1.0;
-      
+
       const x = -1.5 + progress * 3.0;
       const y = 0.4 + Math.sin(progress * Math.PI) * 0.8;
       const z = 0.0 + Math.sin(progress * Math.PI) * 0.3;
@@ -196,7 +201,7 @@ function Dialog({ delayTimeMs }: { delayTimeMs: number }) {
   const totalBlocks = 21;
 
   useFrame((state, delta) => {
-    timeAccumulator.current += delta;
+    timeAccumulator.current += Math.min(delta, MAX_DELTA);
     const delaySeconds = delayTimeMs / 1000;
     if (timeAccumulator.current >= delaySeconds) {
       timeAccumulator.current -= delaySeconds;
@@ -394,8 +399,9 @@ function CameraController({ mode }: { mode: number }) {
   const userInteracting = useRef(false);
   const autoCycleIndex = useRef(1);
   const autoTimer = useRef(0);
+  const localTime = useRef(0);
   const isMobile = size.width < 768;
-  const zoomScale = isMobile ? 1.25 : 1;
+  const zoomScale = isMobile ? 1.375 : 1;
   const targetPos = useMemo(() => new THREE.Vector3(0, 0, 8.5), []);
 
   useEffect(() => {
@@ -405,10 +411,11 @@ function CameraController({ mode }: { mode: number }) {
   useFrame((state, delta) => {
     if (userInteracting.current) return;
 
+    const clampedDelta = Math.min(delta, MAX_DELTA);
     let activeMode = mode;
 
     if (mode === 0) {
-      autoTimer.current += delta;
+      autoTimer.current += clampedDelta;
       if (autoTimer.current > 5) {
         autoTimer.current = 0;
         autoCycleIndex.current = (autoCycleIndex.current % 9) + 1;
@@ -416,7 +423,8 @@ function CameraController({ mode }: { mode: number }) {
       activeMode = autoCycleIndex.current;
     }
 
-    const t = state.clock.elapsedTime;
+    localTime.current += clampedDelta;
+    const t = localTime.current;
 
     const s = zoomScale;
     switch (activeMode) {
@@ -442,10 +450,10 @@ function CameraController({ mode }: { mode: number }) {
     }
 
     // Smooth ease towards the target position
-    camera.position.lerp(targetPos, delta * 1.2);
+    camera.position.lerp(targetPos, clampedDelta * 1.2);
 
     if (controlsRef.current) {
-      controlsRef.current.target.lerp(new THREE.Vector3(0, 0, 0), delta * 1.5);
+      controlsRef.current.target.lerp(new THREE.Vector3(0, 0, 0), clampedDelta * 1.5);
       controlsRef.current.update();
     }
   });
