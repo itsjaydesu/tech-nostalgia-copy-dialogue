@@ -519,14 +519,30 @@ function Taskbar({ onStartClick }: { onStartClick: () => void }) {
   );
 }
 
+function FadeIn({ children }: { children: React.ReactNode }) {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    setVisible(true);
+  }, []);
+  return (
+    <div
+      className="w-full h-full transition-opacity duration-1000 ease-in"
+      style={{ opacity: visible ? 1 : 0 }}
+    >
+      {children}
+    </div>
+  );
+}
+
 export default function App() {
   const [cameraMode, setCameraMode] = useState(1);
 
   return (
     <div className="w-full h-[100dvh] bg-[#018081] flex flex-col overflow-hidden font-sans">
       <div className="flex-1 relative">
+        <FadeIn>
         <Canvas camera={{ position: [0, 0, 8.5], fov: 50 }} shadows>
-          <Suspense fallback={<Html center><div className="text-white text-xl font-bold whitespace-nowrap">Loading 3D Scene...</div></Html>}>
+          <Suspense fallback={null}>
             <ambientLight intensity={0.25} />
             
             {/* Main Key Light */}
@@ -565,6 +581,7 @@ export default function App() {
             <color attach="background" args={['#018081']} />
           </Suspense>
         </Canvas>
+        </FadeIn>
       </div>
       <Taskbar onStartClick={() => setCameraMode(prev => (prev % 9) + 1)} />
     </div>
