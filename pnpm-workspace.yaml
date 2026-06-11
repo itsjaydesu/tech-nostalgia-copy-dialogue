@@ -9,3 +9,7 @@ allowBuilds:
   sharp: true
   "@swc/core": true
   bcrypt: true
+  '@tailwindcss/oxide': true
+  protobufjs: true
+  re2: false
+  unrs-resolver: false
